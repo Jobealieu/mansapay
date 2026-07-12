@@ -14,7 +14,7 @@ Pre-alpha. Currently in Sprint 0 (scaffolding).
 ## Documentation
 - Full requirements: [`docs/SRS.docx`](docs/SRS.docx)
 - UML diagrams: Appendix B of the SRS
-- Agent context: [`CLAUDE.md`](CLAUDE.md)
+- Architecture decisions: [`docs/adr/`](docs/adr/)
 
 ## Tech Stack
 - Backend: Node.js 20 + Express + TypeScript
