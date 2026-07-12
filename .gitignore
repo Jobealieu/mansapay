@@ -36,5 +36,10 @@ coverage/
 # Runtime
 *.pid
 *.seed
+
+# Expo (apps/mobile, Sprint 5+)
+.expo/
+.expo-shared/
+
 # AI agent context (local only)
 CLAUDE.md
