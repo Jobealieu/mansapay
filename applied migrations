@@ -1,0 +1,12 @@
+ apps/api/migrations/0001_create_users.sql      | 10 [32m++++++++++[m
+ apps/api/package.json                          |  4 [32m+++[m[31m-[m
+ apps/api/src/app.ts                            |  2 [32m++[m
+ apps/api/src/db/migrate.ts                     | 50 [32m++++++++++++++++++++++++++++++++++++++++++++++++++[m
+ apps/api/src/routes/auth.route.test.ts         | 59 [32m+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++[m
+ apps/api/src/routes/auth.route.ts              | 25 [32m+++++++++++++++++++++++++[m
+ apps/api/src/services/auth.service.ts          | 41 [32m+++++++++++++++++++++++++++++++++++++++++[m
+ docs/SRS-AMENDMENTS.md                         |  6 [32m++++++[m
+ package-lock.json                              | 45 [32m+++++++++++++++++++++++++++++++++++++++++++++[m
+ packages/shared/src/index.ts                   |  1 [32m+[m
+ packages/shared/src/schemas/register.schema.ts | 13 [32m+++++++++++++[m
+ 11 files changed, 255 insertions(+), 1 deletion(-)
