@@ -12,3 +12,8 @@ written, each tied to the ADR that made the call.
   and unverified for registration. Phone number is the primary identifier.
   Rationale: many target users in the Senegal-Gambia corridor do not have
   email. Email verification and KYC are handled in later sprints.
+
+## 2026-07-18
+- New NFR (security): login rate limiting (5 attempts/phone, 20/IP per
+  15 min, Redis-backed) and refresh token family cascade revocation on
+  reuse detection, added to the FR-02 login/session flow.
