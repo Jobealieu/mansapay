@@ -7,6 +7,8 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
+  AT_API_KEY: z.string().min(1, 'AT_API_KEY is required'),
+  AT_USERNAME: z.string().min(1, 'AT_USERNAME is required'),
 });
 
 export const env = envSchema.parse(process.env);
