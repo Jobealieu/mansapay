@@ -1,0 +1,81 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-bg: #0a0a0d;
+  --color-surface: #131318;
+  --color-surface-2: #1a1a20;
+  --color-border: #ffffff14;
+  --color-border-strong: #ffffff26;
+  --color-fg: #f5f5f7;
+  --color-fg-muted: #9a9aa4;
+
+  --color-accent-gold: #f2b544;
+  --color-accent-copper: #d9812b;
+
+  --color-danger: #f5657a;
+  --color-danger-bg: #f5657a1f;
+  --color-success: #34d399;
+  --color-success-bg: #34d3991f;
+
+  --radius-card: 1.25rem;
+  --radius-control: 0.75rem;
+
+  --shadow-glass: 0 8px 32px -8px rgb(0 0 0 / 0.5);
+  --shadow-glow: 0 0 0 1px rgb(242 181 68 / 0.16), 0 8px 24px -4px rgb(242 181 68 / 0.22);
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--color-accent-gold);
+    color: var(--color-bg);
+  }
+
+  /* Consistent, visible focus ring everywhere instead of relying on each
+     component to remember one. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent-gold);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Accessibility baseline: projector/screen-recording setups and users who
+     request less motion should get near-instant state changes, not our
+     150-250ms eased transitions. This is the CSS-level net; components that
+     animate via Framer Motion additionally check useReducedMotion() in JS. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    /* Loading spinners are exempt: their rotation communicates "still
+       working," not decoration, so WCAG's reduced-motion carve-out for
+       essential motion applies. Freezing it would read as "stuck." */
+    [data-spinner] {
+      animation-duration: 0.9s !important;
+      animation-iteration-count: infinite !important;
+    }
+  }
+}

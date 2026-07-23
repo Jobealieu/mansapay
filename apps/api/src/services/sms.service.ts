@@ -11,6 +11,11 @@ export class SmsSendError extends Error {
 }
 
 export async function sendSms(phoneNumber: string, message: string): Promise<void> {
+  if (env.SMS_DEV_MODE) {
+    console.log(`[SMS_DEV_MODE] SMS to ${phoneNumber} not sent (Africa's Talking bypassed): ${message}`);
+    return;
+  }
+
   let response: Response;
   try {
     response = await fetch(AT_SANDBOX_MESSAGING_URL, {
