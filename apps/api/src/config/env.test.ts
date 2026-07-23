@@ -14,6 +14,7 @@ const REQUIRED_ENV = {
   AT_API_KEY: 'test-key',
   AT_USERNAME: 'sandbox',
   WALLET_ENCRYPTION_KEY: 'a'.repeat(64),
+  ALLOWED_ORIGINS: 'http://localhost:5173',
 };
 
 const ORIGINAL_ENV = { ...process.env };

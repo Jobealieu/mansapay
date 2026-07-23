@@ -24,6 +24,10 @@ if (env.SMS_DEV_MODE) {
 
 const app = createApp();
 
-app.listen(env.PORT, () => {
-  console.log(`MansaPay API listening on port ${env.PORT}`);
+// Explicit 0.0.0.0, not the Node default or 127.0.0.1: Render's load
+// balancer connects from outside this container, and a loopback-bound
+// server is unreachable from it. PORT is injected by Render at runtime -
+// never set it manually in the service's env vars.
+app.listen(env.PORT, '0.0.0.0', () => {
+  console.log(`MansaPay API listening on 0.0.0.0:${env.PORT}`);
 });

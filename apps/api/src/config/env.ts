@@ -27,6 +27,22 @@ const envSchema = z
     // effect is permitting SMS_DEV_MODE=true in production (see below).
     // Must never be set for a deployment serving real users.
     DEMO_MODE: booleanFlag,
+    // Comma-separated list of origins the browser is allowed to call this
+    // API from (e.g. the deployed static site's URL). Required, no
+    // default: an unset value should fail startup loudly rather than
+    // silently allow or block every origin.
+    ALLOWED_ORIGINS: z
+      .string()
+      .min(1, 'ALLOWED_ORIGINS is required')
+      .transform((value) =>
+        value
+          .split(',')
+          .map((origin) => origin.trim())
+          .filter(Boolean),
+      )
+      .refine((origins) => origins.length > 0 && origins.every((origin) => z.string().url().safeParse(origin).success), {
+        message: 'ALLOWED_ORIGINS must be a comma-separated list of valid origin URLs',
+      }),
   })
   .refine((data) => !(data.NODE_ENV === 'production' && data.SMS_DEV_MODE && !data.DEMO_MODE), {
     message:
