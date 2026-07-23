@@ -29,6 +29,7 @@ const SENDER_USER_ID = '11111111-1111-1111-1111-111111111111';
 const RECIPIENT_USER_ID = '22222222-2222-2222-2222-222222222222';
 const SENDER_PUBLIC_KEY = 'GASENDER00000000000000000000000000000000000000000000000';
 const RECIPIENT_PUBLIC_KEY = 'GARECIPIENT0000000000000000000000000000000000000000000';
+const TRANSACTION_ID = '33333333-3333-3333-3333-333333333333';
 
 beforeEach(() => {
   queryMock.mockReset();
@@ -106,7 +107,7 @@ describe('getBalance', () => {
 });
 
 describe('transfer', () => {
-  it('moves funds between two wallets and returns the transaction hash', async () => {
+  it('creates a pending transaction row before contacting Stellar, then marks it completed with the hash', async () => {
     const fakeSenderSecret = 'SFAKESECRETKEYFORTESTING0000000000000000000000000000000';
     queryMock.mockResolvedValueOnce({
       rows: [{ stellar_public_key: SENDER_PUBLIC_KEY, encrypted_secret: encryptSecret(fakeSenderSecret) }],
@@ -114,6 +115,8 @@ describe('transfer', () => {
     queryMock.mockResolvedValueOnce({
       rows: [{ user_id: RECIPIENT_USER_ID, stellar_public_key: RECIPIENT_PUBLIC_KEY }],
     }); // recipient wallet
+    queryMock.mockResolvedValueOnce({ rows: [{ id: TRANSACTION_ID }] }); // INSERT pending
+    queryMock.mockResolvedValueOnce({}); // UPDATE completed
 
     loadAccountMock.mockResolvedValueOnce({
       accountId: SENDER_PUBLIC_KEY,
@@ -128,7 +131,7 @@ describe('transfer', () => {
     const { transfer } = await import('./wallet.service.js');
     const result = await transfer(SENDER_USER_ID, '+2207700001', '10');
 
-    expect(result).toEqual({ hash: 'a-transaction-hash' });
+    expect(result).toEqual({ id: TRANSACTION_ID, hash: 'a-transaction-hash' });
     expect(buildSignedPaymentTransactionMock).toHaveBeenCalledWith({
       accountId: SENDER_PUBLIC_KEY,
       sequence: '1',
@@ -137,6 +140,54 @@ describe('transfer', () => {
       amount: '10',
     });
     expect(submitPaymentMock).toHaveBeenCalledWith(fakeTransaction);
+
+    const insertCall = queryMock.mock.calls[2]!;
+    expect(insertCall[0]).toMatch(/INSERT INTO transactions/);
+    expect(insertCall[0]).toMatch(/'pending'/);
+    expect(insertCall[1]).toEqual([SENDER_USER_ID, RECIPIENT_USER_ID, SENDER_PUBLIC_KEY, RECIPIENT_PUBLIC_KEY, '10', 'XLM']);
+
+    // the pending row must exist before Stellar is ever contacted
+    const insertOrder = queryMock.mock.invocationCallOrder[2]!;
+    const submitOrder = submitPaymentMock.mock.invocationCallOrder[0]!;
+    expect(insertOrder).toBeLessThan(submitOrder);
+
+    const updateCall = queryMock.mock.calls[3]!;
+    expect(updateCall[0]).toMatch(/UPDATE transactions SET status = 'completed'/);
+    expect(updateCall[1]).toEqual([TRANSACTION_ID, 'a-transaction-hash']);
+  });
+
+  it('marks the transaction failed with a reason when Stellar submission fails, never leaving it pending', async () => {
+    const fakeSenderSecret = 'SFAKESECRETKEYFORTESTING0000000000000000000000000000000';
+    queryMock.mockResolvedValueOnce({
+      rows: [{ stellar_public_key: SENDER_PUBLIC_KEY, encrypted_secret: encryptSecret(fakeSenderSecret) }],
+    }); // sender wallet
+    queryMock.mockResolvedValueOnce({
+      rows: [{ user_id: RECIPIENT_USER_ID, stellar_public_key: RECIPIENT_PUBLIC_KEY }],
+    }); // recipient wallet
+    queryMock.mockResolvedValueOnce({ rows: [{ id: TRANSACTION_ID }] }); // INSERT pending
+    queryMock.mockResolvedValueOnce({}); // UPDATE failed
+
+    loadAccountMock.mockResolvedValueOnce({
+      accountId: SENDER_PUBLIC_KEY,
+      sequence: '1',
+      nativeBalance: '100.0000000',
+      subentryCount: 0,
+    });
+    buildSignedPaymentTransactionMock.mockReturnValueOnce({ fake: 'transaction' });
+    submitPaymentMock.mockRejectedValueOnce(new Error('horizon rejected the transaction'));
+
+    const { transfer, TransferSubmissionError } = await import('./wallet.service.js');
+    const error = await transfer(SENDER_USER_ID, '+2207700001', '10').catch((err: unknown) => err);
+
+    expect(error).toBeInstanceOf(TransferSubmissionError);
+    expect((error as InstanceType<typeof TransferSubmissionError>).transactionId).toBe(TRANSACTION_ID);
+
+    const updateCall = queryMock.mock.calls[3]!;
+    expect(updateCall[0]).toMatch(/UPDATE transactions SET status = 'failed'/);
+    expect(updateCall[1]).toEqual([TRANSACTION_ID, 'horizon rejected the transaction']);
+    // exactly 4 queries total: sender lookup, recipient lookup, pending insert, failed update -
+    // nothing left the row stuck at 'pending'
+    expect(queryMock).toHaveBeenCalledTimes(4);
   });
 
   it('throws RecipientWalletNotFoundError when the recipient has no wallet', async () => {

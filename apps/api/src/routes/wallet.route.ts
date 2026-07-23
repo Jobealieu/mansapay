@@ -10,6 +10,7 @@ import {
   RecipientWalletNotFoundError,
   InsufficientBalanceError,
   SelfTransferError,
+  TransferSubmissionError,
 } from '../services/wallet.service.js';
 
 export const walletRouter = Router();
@@ -54,8 +55,8 @@ walletRouter.post('/wallet/transfer', requireAuth, async (req: Request, res: Res
   }
 
   try {
-    const { hash } = await transfer(req.userId!, parsed.data.toPhoneNumber, parsed.data.amount);
-    res.status(200).json({ hash });
+    const { id, hash } = await transfer(req.userId!, parsed.data.toPhoneNumber, parsed.data.amount);
+    res.status(200).json({ id, hash });
   } catch (err) {
     if (err instanceof WalletNotFoundError) {
       res.status(400).json({ error: 'wallet_not_found' });
@@ -71,6 +72,10 @@ walletRouter.post('/wallet/transfer', requireAuth, async (req: Request, res: Res
     }
     if (err instanceof InsufficientBalanceError) {
       res.status(400).json({ error: 'insufficient_balance' });
+      return;
+    }
+    if (err instanceof TransferSubmissionError) {
+      res.status(502).json({ error: 'stellar_submission_failed', transactionId: err.transactionId });
       return;
     }
     console.error('transfer failed', err instanceof Error ? err.message : err);

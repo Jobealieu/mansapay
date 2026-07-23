@@ -38,6 +38,16 @@ export class SelfTransferError extends Error {
   }
 }
 
+export class TransferSubmissionError extends Error {
+  constructor(public readonly transactionId: string, cause: unknown) {
+    super('stellar transfer submission failed');
+    this.name = 'TransferSubmissionError';
+    this.cause = cause;
+  }
+}
+
+const NATIVE_ASSET_CODE = 'XLM';
+
 interface WalletRow {
   id: string;
   stellar_public_key: string;
@@ -95,6 +105,7 @@ export async function getBalance(userId: string): Promise<string> {
 }
 
 export interface TransferResult {
+  id: string;
   hash: string;
 }
 
@@ -126,15 +137,39 @@ export async function transfer(fromUserId: string, toPhoneNumber: string, amount
     throw new InsufficientBalanceError();
   }
 
-  const senderSecret = decryptSecret(senderWallet.encrypted_secret);
-  const transaction = stellar.buildSignedPaymentTransaction({
-    accountId: account.accountId,
-    sequence: account.sequence,
-    senderSecret,
-    destinationPublicKey: recipientWallet.stellar_public_key,
-    amount,
-  });
+  const insertResult = await pool.query<{ id: string }>(
+    `INSERT INTO transactions
+       (sender_user_id, recipient_user_id, sender_public_key, recipient_public_key, amount, asset, status)
+     VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+     RETURNING id`,
+    [fromUserId, recipientWallet.user_id, senderWallet.stellar_public_key, recipientWallet.stellar_public_key, amount, NATIVE_ASSET_CODE],
+  );
+  const transactionId = insertResult.rows[0]!.id;
 
-  const hash = await stellar.submitPayment(transaction);
-  return { hash };
+  let hash: string;
+  try {
+    const senderSecret = decryptSecret(senderWallet.encrypted_secret);
+    const transaction = stellar.buildSignedPaymentTransaction({
+      accountId: account.accountId,
+      sequence: account.sequence,
+      senderSecret,
+      destinationPublicKey: recipientWallet.stellar_public_key,
+      amount,
+    });
+    hash = await stellar.submitPayment(transaction);
+  } catch (err) {
+    const failureReason = err instanceof Error ? err.message : 'unknown error';
+    await pool.query(
+      `UPDATE transactions SET status = 'failed', failure_reason = $2, completed_at = now() WHERE id = $1`,
+      [transactionId, failureReason],
+    );
+    throw new TransferSubmissionError(transactionId, err);
+  }
+
+  await pool.query(`UPDATE transactions SET status = 'completed', stellar_tx_hash = $2, completed_at = now() WHERE id = $1`, [
+    transactionId,
+    hash,
+  ]);
+
+  return { id: transactionId, hash };
 }

@@ -85,8 +85,8 @@ describe('GET /wallet/balance', () => {
 });
 
 describe('POST /wallet/transfer', () => {
-  it('submits a transfer and returns the transaction hash', async () => {
-    transferMock.mockResolvedValueOnce({ hash: 'a-transaction-hash' });
+  it('submits a transfer and returns the transaction id and hash', async () => {
+    transferMock.mockResolvedValueOnce({ id: '33333333-3333-3333-3333-333333333333', hash: 'a-transaction-hash' });
 
     const { createApp } = await import('../app.js');
     const res = await request(createApp())
@@ -95,8 +95,25 @@ describe('POST /wallet/transfer', () => {
       .send({ toPhoneNumber: '+2207700001', amount: '10' });
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ hash: 'a-transaction-hash' });
+    expect(res.body).toEqual({ id: '33333333-3333-3333-3333-333333333333', hash: 'a-transaction-hash' });
     expect(transferMock).toHaveBeenCalledWith(USER_ID, '+2207700001', '10');
+  });
+
+  it('returns 502 with the transaction id when Stellar submission fails', async () => {
+    const { TransferSubmissionError } = await import('../services/wallet.service.js');
+    transferMock.mockRejectedValueOnce(new TransferSubmissionError('33333333-3333-3333-3333-333333333333', new Error('boom')));
+
+    const { createApp } = await import('../app.js');
+    const res = await request(createApp())
+      .post('/wallet/transfer')
+      .set('Authorization', await authHeader())
+      .send({ toPhoneNumber: '+2207700001', amount: '10' });
+
+    expect(res.status).toBe(502);
+    expect(res.body).toEqual({
+      error: 'stellar_submission_failed',
+      transactionId: '33333333-3333-3333-3333-333333333333',
+    });
   });
 
   it('returns 400 when the recipient has no wallet', async () => {
