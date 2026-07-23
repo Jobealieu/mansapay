@@ -2,6 +2,7 @@ import express, { type Express } from 'express';
 import { healthRouter } from './routes/health.route.js';
 import { authRouter } from './routes/auth.route.js';
 import { verifyRouter } from './routes/verify.route.js';
+import { walletRouter } from './routes/wallet.route.js';
 
 export function createApp(): Express {
   const app = express();
@@ -9,5 +10,6 @@ export function createApp(): Express {
   app.use(healthRouter);
   app.use(authRouter);
   app.use(verifyRouter);
+  app.use(walletRouter);
   return app;
 }
