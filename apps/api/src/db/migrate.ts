@@ -16,7 +16,9 @@ async function run(): Promise<void> {
   `);
 
   const applied = new Set(
-    (await pool.query<{ name: string }>('SELECT name FROM schema_migrations')).rows.map((row) => row.name),
+    (await pool.query<{ name: string }>('SELECT name FROM schema_migrations')).rows.map(
+      (row: { name: string }) => row.name,
+    ),
   );
 
   const files = (await readdir(MIGRATIONS_DIR)).filter((file) => file.endsWith('.sql')).sort();

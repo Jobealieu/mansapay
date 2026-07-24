@@ -81,7 +81,7 @@ export async function listTransactions(
     [userId, before, limit],
   );
 
-  const transactions = result.rows.map((row) => toView(row, userId));
+  const transactions = result.rows.map((row: TransactionRow) => toView(row, userId));
   const lastRow = result.rows[result.rows.length - 1];
   const nextCursor = transactions.length === limit && lastRow ? lastRow.created_at.toISOString() : null;
 
