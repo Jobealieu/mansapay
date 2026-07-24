@@ -11,7 +11,13 @@ const booleanFlag = z
 const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-    PORT: z.coerce.number().int().positive().default(4000),
+    // Render provides PORT at runtime, but it can arrive as an empty
+    // string depending on context. Treat unset AND "" as "use the
+    // default" - only a genuinely non-empty, invalid value should fail.
+    PORT: z.preprocess(
+      (value) => (value === undefined || value === '' ? 4000 : value),
+      z.coerce.number().int().positive(),
+    ),
     DATABASE_URL: z.string().url(),
     REDIS_URL: z.string().url(),
     JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
