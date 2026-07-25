@@ -5,7 +5,7 @@ Accepted
 
 ## Context
 The SRS (Chapter 5, NFR-03) specifies bcrypt with at least 12 salt rounds.
-CLAUDE.md specifies argon2. No auth code exists yet (Sprint 0 is
+The project's engineering conventions specify argon2. No auth code exists yet (Sprint 0 is
 scaffolding only), so this conflict does not block current work, but it
 must be resolved before Sprint 2 implements registration/login.
 
