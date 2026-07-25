@@ -18,5 +18,9 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
+  // TODO(auth): ProtectedRoute only checks for a token, not
+  // phoneVerified. An authed-but-unverified user can deep-link past
+  // verification. Add a verified-gate guard in a later pass.
+
   return <>{children}</>;
 }

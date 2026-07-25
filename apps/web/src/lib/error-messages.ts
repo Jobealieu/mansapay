@@ -11,6 +11,11 @@ const ERROR_MESSAGES: Record<string, string> = {
   validation_failed: 'Please check the highlighted fields and try again.',
   network_error: "We couldn't reach the server. Check your connection and try again.",
   internal_error: 'Something went wrong on our end. Please try again.',
+  wallet_not_found: 'You need a wallet before you can send money. Create one from your dashboard.',
+  recipient_wallet_not_found: "That recipient doesn't have a wallet yet.",
+  self_transfer_not_allowed: "You can't send money to yourself.",
+  insufficient_balance: "You don't have enough balance for this transfer.",
+  stellar_submission_failed: "We couldn't confirm your transfer on the network. Check your history in a moment.",
 };
 
 const FALLBACK_MESSAGE = 'Something went wrong. Please try again.';

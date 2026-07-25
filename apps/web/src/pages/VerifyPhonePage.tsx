@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { AuthLayout } from '../components/AuthLayout.js';
 import { Button } from '../components/ui/Button.js';
 import { OtpInput } from '../components/ui/OtpInput.js';
@@ -21,13 +22,13 @@ export function VerifyPhonePage() {
   const [codeError, setCodeError] = useState<string | null>(null);
   const [shakeKey, setShakeKey] = useState(0);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
   const [sendState, setSendState] = useState<SendState>('idle');
   const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
   const [demoCode, setDemoCode] = useState<string | null>(null);
   const hasSentInitialCode = useRef(false);
   const { logout } = useAuth();
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -76,8 +77,8 @@ export function VerifyPhonePage() {
     setCodeError(null);
     try {
       await confirmOtp(submittedCode);
-      setIsVerified(true);
       showToast("You're verified!", 'success');
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       const message = toHumanMessage(err);
       setCode('');
@@ -87,21 +88,6 @@ export function VerifyPhonePage() {
     } finally {
       setIsConfirming(false);
     }
-  }
-
-  if (isVerified) {
-    return (
-      <AuthLayout title="Phone verified" subtitle="Your account is ready.">
-        <div className="flex flex-col items-center gap-3 py-4 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-success-bg text-success">
-            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
-              <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-          <p className="text-sm text-fg-muted">You&apos;re all set. The rest of MansaPay is on its way in a future update.</p>
-        </div>
-      </AuthLayout>
-    );
   }
 
   const isResendDisabled = sendState === 'sending' || (retryAfterSeconds !== null && retryAfterSeconds > 0);
