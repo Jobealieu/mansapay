@@ -24,6 +24,7 @@ export function VerifyPhonePage() {
   const [isVerified, setIsVerified] = useState(false);
   const [sendState, setSendState] = useState<SendState>('idle');
   const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
+  const [demoCode, setDemoCode] = useState<string | null>(null);
   const hasSentInitialCode = useRef(false);
   const { logout } = useAuth();
   const { showToast } = useToast();
@@ -42,7 +43,13 @@ export function VerifyPhonePage() {
   const sendCode = useCallback(async () => {
     setSendState('sending');
     try {
-      await requestOtp();
+      const result = await requestOtp();
+      if (result?.demoMode) {
+        setDemoCode(result.devCode);
+        setCode(result.devCode);
+      } else {
+        setDemoCode(null);
+      }
       setSendState('sent');
     } catch (err) {
       setSendState('error');
@@ -114,6 +121,25 @@ export function VerifyPhonePage() {
       }
     >
       <div className="flex flex-col gap-5">
+        {demoCode && (
+          <div
+            role="status"
+            className="flex flex-col items-center gap-1.5 rounded-control border border-accent-gold/40 bg-accent-gold/10 px-3.5 py-3 text-center"
+          >
+            <span className="text-xs font-semibold uppercase tracking-wide text-accent-gold">
+              Demo mode - code shown for testing
+            </span>
+            <span className="font-mono text-lg font-semibold tracking-[0.3em] text-fg">{demoCode}</span>
+            <button
+              type="button"
+              onClick={() => setCode(demoCode)}
+              className="text-xs font-medium text-accent-gold underline-offset-4 hover:text-accent-copper hover:underline"
+            >
+              Fill code
+            </button>
+          </div>
+        )}
+
         <motion.div
           key={shakeKey}
           animate={codeError && !shouldReduceMotion ? { x: [0, -6, 6, -4, 4, 0] } : {}}

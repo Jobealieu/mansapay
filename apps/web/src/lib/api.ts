@@ -108,7 +108,12 @@ export function logoutSession(refreshToken: string): Promise<void> {
   return request('/auth/logout', { method: 'POST', body: { refreshToken } });
 }
 
-export function requestOtp(): Promise<void> {
+export interface RequestOtpResult {
+  demoMode: boolean;
+  devCode: string;
+}
+
+export function requestOtp(): Promise<RequestOtpResult | undefined> {
   return request('/auth/verify/request', { method: 'POST', auth: true });
 }
 

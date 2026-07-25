@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
+import { env } from '../config/env.js';
 import { requireAuth } from '../middleware/require-auth.js';
 import { getUserById } from '../services/auth.service.js';
 import { checkOtpRequestRateLimit, refundOtpRequestRateLimit } from '../services/rate-limit.service.js';
@@ -32,8 +33,9 @@ verifyRouter.post('/auth/verify/request', requireAuth, async (req: Request, res:
       return;
     }
 
+    let code: string;
     try {
-      await requestOtp(userId, user.phoneNumber, ip);
+      code = await requestOtp(userId, user.phoneNumber, ip);
     } catch (err) {
       await refundOtpRequestRateLimit(user.phoneNumber);
       if (err instanceof OtpSendFailedError) {
@@ -41,6 +43,17 @@ verifyRouter.post('/auth/verify/request', requireAuth, async (req: Request, res:
         return;
       }
       throw err;
+    }
+
+    // Demo deployments have no way to receive real SMS and no access to
+    // server logs, so the grading facilitator needs the code surfaced
+    // here instead. Gated on DEMO_MODE alone (not SMS_DEV_MODE) so this
+    // can never leak in a normal deployment - see env.ts's production
+    // guard, which already refuses to boot with SMS_DEV_MODE=true and
+    // DEMO_MODE unset/false.
+    if (env.DEMO_MODE) {
+      res.status(200).json({ demoMode: true, devCode: code });
+      return;
     }
 
     res.status(204).send();

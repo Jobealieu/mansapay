@@ -35,7 +35,7 @@ export class OtpSendFailedError extends Error {
   }
 }
 
-export async function requestOtp(userId: string, phoneNumber: string, ip: string): Promise<void> {
+export async function requestOtp(userId: string, phoneNumber: string, ip: string): Promise<string> {
   const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
   const hash = hashCode(code);
 
@@ -52,6 +52,7 @@ export async function requestOtp(userId: string, phoneNumber: string, ip: string
   }
 
   await logEvent(userId, 'requested', ip);
+  return code;
 }
 
 export type ConfirmOtpResult = 'confirmed' | 'invalid';

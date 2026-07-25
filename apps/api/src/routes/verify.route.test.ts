@@ -78,6 +78,10 @@ describe('POST /auth/verify/request', () => {
       .set('Authorization', await authHeader());
 
     expect(res.status).toBe(204);
+    // Outside demo mode the code must never reach the client, in the body
+    // or anywhere else in the response.
+    expect(res.body).toEqual({});
+    expect(res.text).toBe('');
     expect(sendSmsMock).toHaveBeenCalledTimes(1);
     expect(sendSmsMock.mock.calls[0]![0]).toBe(PHONE_NUMBER);
 
@@ -89,6 +93,37 @@ describe('POST /auth/verify/request', () => {
     const insertCall = queryMock.mock.calls[1]!;
     expect(insertCall[0]).toMatch(/INSERT INTO phone_verifications/);
     expect(insertCall[1]).toEqual([USER_ID, 'requested', expect.any(String)]);
+  });
+
+  it('includes the plaintext code and demoMode flag when DEMO_MODE=true', async () => {
+    queryMock.mockResolvedValueOnce({
+      rows: [{ id: USER_ID, phone_number: PHONE_NUMBER, country: 'GM' }],
+    }); // getUserById
+    redisIncrMock.mockResolvedValueOnce(1); // rate limit: first request this hour
+    sendSmsMock.mockResolvedValueOnce(undefined);
+    queryMock.mockResolvedValueOnce({}); // INSERT phone_verifications 'requested'
+
+    const originalDemoMode = process.env.DEMO_MODE;
+    process.env.DEMO_MODE = 'true';
+    vi.resetModules();
+    try {
+      const { createApp } = await import('../app.js');
+      const { env } = await import('../config/env.js');
+      expect(env.DEMO_MODE).toBe(true); // sanity: the override actually took
+
+      const token = `Bearer ${jwt.sign({ sub: USER_ID }, env.JWT_SECRET, { algorithm: 'HS256', expiresIn: 900 })}`;
+      const res = await request(createApp()).post('/auth/verify/request').set('Authorization', token);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ demoMode: true, devCode: expect.stringMatching(/^\d{6}$/) });
+      // The code the client received must be the same one that was hashed
+      // and stored - not a decoy value.
+      const storedHash = redisSetMock.mock.calls[0]![1] as string;
+      expect(storedHash).toBe(hashOf(res.body.devCode));
+    } finally {
+      process.env.DEMO_MODE = originalDemoMode;
+      vi.resetModules();
+    }
   });
 
   it('returns 502 and refunds the rate limit budget when the AT call times out', async () => {
