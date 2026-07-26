@@ -158,7 +158,7 @@ accident.
     MansaPay API listening on 0.0.0.0:<port>
     ```
 12. Once it's live, copy the service's URL from the top of the page (looks
-    like `https://mansapay-api-xxxx.onrender.com`). You'll need it twice:
+    like `https://mansapay.onrender.com`). You'll need it twice:
     for the frontend's `VITE_API_URL` (Step 4) and to fix `ALLOWED_ORIGINS`
     (Step 5).
 
@@ -180,7 +180,7 @@ accident.
 
    | Variable | Value | Where it comes from |
    |---|---|---|
-   | `VITE_API_URL` | the API's URL from Step 3, e.g. `https://mansapay-api-xxxx.onrender.com` | Step 3, the URL Render assigned the Web Service |
+   | `VITE_API_URL` | the API's URL from Step 3, e.g. `https://mansapay.onrender.com` | Step 3, the URL Render assigned the Web Service |
 
    This is read **at build time**, not runtime - Vite bakes it into the
    compiled JS. If you change it later, you must trigger a new build for
@@ -190,7 +190,7 @@ accident.
 6. Click **Create Static Site**. Watch the build log; if you forgot
    `VITE_API_URL`, `vite.config.ts` prints a warning explicitly telling
    you so (the build still succeeds, it just won't work once deployed).
-7. Copy this service's URL too, e.g. `https://mansapay-web-xxxx.onrender.com`.
+7. Copy this service's URL too, e.g. `https://mansapay-web.onrender.com`.
 
 ---
 
@@ -199,7 +199,7 @@ accident.
 Go back to the **API** service (Step 3) → **Environment**, and set:
 
 ```
-ALLOWED_ORIGINS=https://mansapay-web-xxxx.onrender.com
+ALLOWED_ORIGINS=https://mansapay-web.onrender.com
 ```
 
 using the actual Static Site URL from Step 4 (no trailing slash - it must
@@ -208,7 +208,7 @@ using the deployed API from local dev occasionally, you can add your
 local origins too, comma-separated:
 
 ```
-ALLOWED_ORIGINS=https://mansapay-web-xxxx.onrender.com,http://localhost:5173
+ALLOWED_ORIGINS=https://mansapay-web.onrender.com,http://localhost:5173
 ```
 
 Saving this env var change triggers an automatic redeploy of the API
