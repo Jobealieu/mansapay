@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.js';
+import { SiteFooter } from './SiteFooter.js';
 
 interface NavItem {
   to: string;
@@ -89,7 +90,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 pb-24 pt-6 sm:px-6 sm:pb-10">{children}</main>
+      <main className="mx-auto flex max-w-4xl flex-col px-4 pb-24 pt-6 sm:px-6 sm:pb-10">
+        {children}
+        <SiteFooter />
+      </main>
 
       <nav
         aria-label="Primary"
