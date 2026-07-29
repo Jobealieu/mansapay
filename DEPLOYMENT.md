@@ -192,6 +192,13 @@ accident.
    you so (the build still succeeds, it just won't work once deployed).
 7. Copy this service's URL too, e.g. `https://mansapay-web.onrender.com`.
 
+**SPA routing is already handled** - `apps/web/public/_redirects` (checked
+into the repo) tells Render to serve `index.html` for any path that isn't
+a real file, with a `200` (not a redirect), so React Router resolves
+routes like `/dashboard` or `/login` on refresh, deep link, or browser
+back. Vite copies `public/` into `dist/` verbatim during the build, so
+this ships automatically - no dashboard setting to configure.
+
 ---
 
 ## Step 5: Close the loop - fix `ALLOWED_ORIGINS`
@@ -231,7 +238,14 @@ service. Wait for it to finish before testing.
    a browser. You should see the MansaPay register screen, not a blank
    page or a CORS error in the console.
 
-3. **Full signup flow**: register a real-looking account, log in, and get
+3. **Deep links and refresh work**: navigate to
+   `https://<your-web>.onrender.com/dashboard` directly (paste the URL,
+   don't click into it from within the app), then refresh the page. You
+   should land back on the dashboard (redirected to `/login` if you're
+   not authenticated), not a Render "Not Found" page. Try browser back
+   after navigating between routes too - same expectation.
+
+4. **Full signup flow**: register a real-looking account, log in, and get
    to the "Verify your phone" screen. Open the API service's **Logs** tab
    on Render and look for a line like:
    ```

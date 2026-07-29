@@ -13,8 +13,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 // <Link> instead of a <button> - shared style source, not a new component.
 export const BUTTON_VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary: 'bg-gradient-to-br from-accent-gold to-accent-copper text-bg font-semibold shadow-glow hover:brightness-110',
-  secondary: 'border border-border-strong bg-surface-2 text-fg hover:bg-white/[0.06]',
-  ghost: 'bg-transparent text-fg-muted hover:bg-white/[0.04] hover:text-fg',
+  secondary: 'border border-border-strong bg-surface-2 text-fg hover:bg-overlay/[0.06]',
+  ghost: 'bg-transparent text-fg-muted hover:bg-overlay/[0.04] hover:text-fg',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(

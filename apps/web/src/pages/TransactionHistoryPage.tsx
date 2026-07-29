@@ -70,7 +70,7 @@ function TransactionRow({ tx }: { tx: Transaction }) {
         href={stellarExplorerTxUrl(tx.stellarTxHash)}
         target="_blank"
         rel="noopener noreferrer"
-        className="block border-b border-border transition-colors duration-150 last:border-0 hover:bg-white/[0.03]"
+        className="block border-b border-border transition-colors duration-150 last:border-0 hover:bg-overlay/[0.03]"
         aria-label={`${isSent ? 'Sent' : 'Received'} ${trimTrailingZeros(tx.amount)} ${tx.asset}, view on Stellar Explorer`}
       >
         {content}

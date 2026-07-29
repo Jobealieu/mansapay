@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.js';
 import { SiteFooter } from './SiteFooter.js';
+import { ThemeToggle } from './ThemeToggle.js';
 
 interface NavItem {
   to: string;
@@ -80,13 +81,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             ))}
           </nav>
 
-          <button
-            type="button"
-            onClick={() => void handleLogout()}
-            className="text-sm font-medium text-fg-muted transition-colors duration-150 hover:text-fg"
-          >
-            Log out
-          </button>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+
+            <button
+              type="button"
+              onClick={() => void handleLogout()}
+              className="text-sm font-medium text-fg-muted transition-colors duration-150 hover:text-fg"
+            >
+              Log out
+            </button>
+          </div>
         </div>
       </header>
 

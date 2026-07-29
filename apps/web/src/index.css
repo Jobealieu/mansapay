@@ -1,6 +1,9 @@
 @import 'tailwindcss';
 
 @theme {
+  /* Dark is the default token set - it's also what applies pre-hydration
+     if data-theme is ever missing. Light overrides live below in
+     :root[data-theme='light'], which outranks this on specificity. */
   --color-bg: #0a0a0d;
   --color-surface: #131318;
   --color-surface-2: #1a1a20;
@@ -8,6 +11,11 @@
   --color-border-strong: #ffffff26;
   --color-fg: #f5f5f7;
   --color-fg-muted: #9a9aa4;
+
+  /* Base tint for hover/press overlays (see Button.tsx, TransactionHistoryPage.tsx)
+     - white in dark mode, flipped to black for light mode below, always used
+     with a /opacity modifier at the call site. */
+  --color-overlay: #ffffff;
 
   --color-accent-gold: #f2b544;
   --color-accent-copper: #d9812b;
@@ -26,6 +34,31 @@
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
+/* Light theme - a deliberately distinct palette, not an inversion of dark.
+   Warm cream base instead of pure white, white cards for lift, and the gold/
+   copper accent deepened so it still clears ~5:1 contrast both as text (on
+   this bg) and as the primary-button gradient fill (against --color-bg used
+   for that button's text) - same relationship dark mode already relies on. */
+:root[data-theme='light'] {
+  --color-bg: #f7f5f0;
+  --color-surface: #ffffff;
+  --color-surface-2: #efece4;
+  --color-border: #00000014;
+  --color-border-strong: #00000026;
+  --color-fg: #1c1a15;
+  --color-fg-muted: #6f6a5c;
+
+  --color-overlay: #000000;
+
+  --color-accent-gold: #b45309;
+  --color-accent-copper: #9a3412;
+
+  --color-danger: #b91c1c;
+  --color-danger-bg: #b91c1c1f;
+  --color-success: #15803d;
+  --color-success-bg: #15803d1f;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -33,6 +66,10 @@
 
   html {
     color-scheme: dark;
+  }
+
+  html[data-theme='light'] {
+    color-scheme: light;
   }
 
   body {
