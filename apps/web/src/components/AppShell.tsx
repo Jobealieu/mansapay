@@ -66,7 +66,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="flex min-h-screen flex-col bg-bg">
       <header className="sticky top-0 z-40 border-b border-border bg-bg/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3.5 sm:px-6">
           <span className="bg-gradient-to-br from-accent-gold to-accent-copper bg-clip-text text-lg font-bold tracking-tight text-transparent">
@@ -95,8 +95,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto flex max-w-4xl flex-col px-4 pb-24 pt-6 sm:px-6 sm:pb-10">
-        {children}
+      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 pb-24 pt-6 sm:px-6 sm:pb-10">
+        <div className="flex-1">{children}</div>
         <SiteFooter />
       </main>
 
