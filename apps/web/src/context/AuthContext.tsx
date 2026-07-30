@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { LoginRequest, RegisterRequest } from '@mansapay/shared';
 import {
@@ -58,29 +58,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
+  // Mirrors `accessToken` but updates synchronously, in the same tick as
+  // applySession/clearSession - not on the next effect pass. api.ts's
+  // getAccessToken() reads this, not the state, so a request fired from a
+  // component that mounts in the same commit as a token change (e.g.
+  // DashboardPage mounting the instant ProtectedRoute sees a fresh
+  // accessToken) can never observe a stale "no token yet" value. Effects
+  // run child-before-parent, so a plain useEffect-registered closure over
+  // `accessToken` state has exactly that stale window; a ref does not.
+  const accessTokenRef = useRef<string | null>(null);
+
+  // Coalesces concurrent refreshAccessToken() callers onto one in-flight
+  // request. Without this, two protected calls 401-ing around the same
+  // moment (see above) would each independently POST /auth/refresh with
+  // the same refresh token; the backend's single-use rotation correctly
+  // treats the second arrival as replay and revokes the whole token
+  // family, logging the user out even though it was one legitimate user.
+  const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
+
   const applySession = useCallback((session: Session) => {
+    accessTokenRef.current = session.accessToken;
     setAccessToken(session.accessToken);
     setStoredRefreshToken(session.refreshToken);
   }, []);
 
   const clearSession = useCallback(() => {
+    accessTokenRef.current = null;
     setAccessToken(null);
     clearStoredRefreshToken();
   }, []);
 
-  const refreshAccessToken = useCallback(async (): Promise<string | null> => {
+  const refreshAccessToken = useCallback((): Promise<string | null> => {
+    if (refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
+    }
+
     const storedRefreshToken = getStoredRefreshToken();
     if (!storedRefreshToken) {
-      return null;
+      return Promise.resolve(null);
     }
-    try {
-      const session = await refreshSession(storedRefreshToken);
-      applySession(session);
-      return session.accessToken;
-    } catch {
-      clearSession();
-      return null;
-    }
+
+    const promise = (async () => {
+      try {
+        const session = await refreshSession(storedRefreshToken);
+        applySession(session);
+        return session.accessToken;
+      } catch {
+        clearSession();
+        return null;
+      } finally {
+        refreshPromiseRef.current = null;
+      }
+    })();
+
+    refreshPromiseRef.current = promise;
+    return promise;
   }, [applySession, clearSession]);
 
   // Hydrate the session once on load from whatever refresh token survived
@@ -102,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     registerAuthHandlers({
-      getAccessToken: () => accessToken,
+      getAccessToken: () => accessTokenRef.current,
       refreshAccessToken,
       onSessionExpired: () => {
         clearSession();
